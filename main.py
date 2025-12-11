@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import os
+import requests
 
 app = FastAPI(title="Quant Trading API", description="Python Quantitative Trading Strategies")
 
@@ -163,6 +164,26 @@ def get_backtest_result(test_id: str):
     }
 
 # Generate trading signal (LONG/SHORT)
+
+def get_binance_price(symbol: str) -> dict:
+    """Fetch live price and volume data from Binance API"""
+    try:
+        url = f"https://api.binance.com/api/v3/ticker/24hr?symbol={symbol.upper()}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "symbol": data.get("symbol"),
+                "price": float(data.get("lastPrice", 0)),
+                "volume": float(data.get("volume", 0)),
+                "high": float(data.get("highPrice", 0)),
+                "low": float(data.get("lowPrice", 0)),
+                "change": float(data.get("priceChange", 0)),
+                "change_percent": float(data.get("priceChangePercent", 0))
+            }
+    except Exception as e:
+        print(f"Binance API error: {e}")
+    return None
 @app.post("/signal")
 def generate_signal(symbol: str, strategy: str):
     """
@@ -171,6 +192,18 @@ def generate_signal(symbol: str, strategy: str):
     """
     # Simple signal generation logic (can be enhanced with real indicators)
     import random
+
+    # Fetch live data from Binance
+    binance_data = get_binance_price(symbol)
+    current_price = 0
+    current_volume = 0
+    price_change = 0
+    
+    if binance_data:
+        current_price = binance_data.get("price", 0)
+        current_volume = binance_data.get("volume", 0)
+        price_change = binance_data.get("change", 0)
+    
     
     # Simulate RSI value (0-100)
     rsi_value = random.uniform(20, 80)
@@ -221,6 +254,9 @@ def generate_signal(symbol: str, strategy: str):
         "signal": signal,
         "confidence": f"{confidence}%",
         "rsi_value": round(rsi_value, 2),
+            "current_price": current_price,
+        "volume_24h": current_volume,
+        "price_change_24h": price_change,
         "timestamp": "2024-12-11T10:00:00Z",
         "message": f"Signal generated: {signal} for {symbol} using {strategy}"
     }
