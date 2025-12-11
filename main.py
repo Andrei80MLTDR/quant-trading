@@ -1,9 +1,22 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 import os
 
 app = FastAPI(title="Quant Trading API", description="Python Quantitative Trading Strategies")
+
+# Data models
+class BacktestRequest(BaseModel):
+    symbol: str
+    strategy: str
+    start_date: str
+    end_date: str
+    initial_capital: float = 10000
+
+class Strategy(BaseModel):
+    name: str
+    description: str
+    risk_reward_ratio: float
 
 # Root endpoint
 @app.get("/", response_class=HTMLResponse)
@@ -15,11 +28,12 @@ def root():
         <title>Quant Trading Dashboard</title>
         <style>
             body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
-            .container { background-color: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: 0 auto; }
+            .container { background-color: white; padding: 20px; border-radius: 8px; max-width: 1200px; margin: 0 auto; }
             h1 { color: #333; }
             .status { background-color: #e8f5e9; padding: 15px; border-radius: 4px; }
             .endpoint { background-color: #f0f0f0; padding: 10px; margin: 10px 0; border-left: 4px solid #2196F3; }
             code { background-color: #eee; padding: 2px 5px; border-radius: 3px; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         </style>
     </head>
     <body>
@@ -30,15 +44,35 @@ def root():
                 <p>The API is live and ready to serve trading strategies and backtesting services.</p>
             </div>
             <h2>Available Endpoints:</h2>
-            <div class="endpoint">
-                <p><strong>GET /</strong> - This dashboard</p>
+            <div class="grid">
+                <div class="endpoint">
+                    <p><strong>GET /</strong> - This dashboard</p>
+                </div>
+                <div class="endpoint">
+                    <p><strong>GET /api/status</strong> - API status information</p>
+                </div>
+                <div class="endpoint">
+                    <p><strong>GET /strategies</strong> - List all trading strategies</p>
+                </div>
+                <div class="endpoint">
+                    <p><strong>POST /backtest</strong> - Run a backtest</p>
+                </div>
+                <div class="endpoint">
+                    <p><strong>GET /backtest/{test_id}</strong> - Get backtest results</p>
+                </div>
+                <div class="endpoint">
+                    <p><strong>GET /docs</strong> - Interactive API documentation (Swagger UI)</p>
+                </div>
             </div>
-            <div class="endpoint">
-                <p><strong>GET /api/status</strong> - API status information</p>
-            </div>
-            <div class="endpoint">
-                <p><strong>GET /docs</strong> - Interactive API documentation (Swagger UI)</p>
-            </div>
+            <h2>Supported Strategies:</h2>
+            <ul>
+                <li>RSI Pattern Recognition</li>
+                <li>Bollinger Bands</li>
+                <li>MACD Oscillator</li>
+                <li>London Breakout</li>
+                <li>Parabolic SAR</li>
+                <li>Awesome Oscillator</li>
+            </ul>
             <p style="color: #666; margin-top: 30px; font-size: 12px;">Python Quantitative Trading Strategies | Powered by FastAPI</p>
         </div>
     </body>
@@ -51,7 +85,81 @@ def get_status():
     return {
         "status": "running",
         "service": "Quant Trading API",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "endpoints": 5
+    }
+
+# Get available strategies
+@app.get("/strategies")
+def get_strategies():
+    return {
+        "strategies": [
+            {
+                "name": "RSI Pattern Recognition",
+                "description": "Relative Strength Index based trading strategy",
+                "risk_reward_ratio": 1.5,
+                "file": "RSI Pattern Recognition backtest.py"
+            },
+            {
+                "name": "Bollinger Bands",
+                "description": "Volatility-based trading strategy using Bollinger Bands",
+                "risk_reward_ratio": 2.0,
+                "file": "Bollinger Bands Pattern Recognition backtest.py"
+            },
+            {
+                "name": "MACD Oscillator",
+                "description": "Moving Average Convergence Divergence strategy",
+                "risk_reward_ratio": 1.8,
+                "file": "MACD Oscillator backtest.py"
+            },
+            {
+                "name": "London Breakout",
+                "description": "Forex breakout strategy at London market open",
+                "risk_reward_ratio": 2.5,
+                "file": "London Breakout backtest.py"
+            },
+            {
+                "name": "Parabolic SAR",
+                "description": "Stop and Reverse trailing strategy",
+                "risk_reward_ratio": 1.6,
+                "file": "Parabolic SAR backtest.py"
+            },
+            {
+                "name": "Awesome Oscillator",
+                "description": "Momentum-based trading strategy",
+                "risk_reward_ratio": 1.9,
+                "file": "Awesome Oscillator backtest.py"
+            }
+        ],
+        "total_strategies": 6
+    }
+
+# Submit backtest request
+@app.post("/backtest")
+def run_backtest(request: BacktestRequest):
+    return {
+        "test_id": "bt_" + request.symbol.lower() + "_001",
+        "symbol": request.symbol,
+        "strategy": request.strategy,
+        "status": "queued",
+        "start_date": request.start_date,
+        "end_date": request.end_date,
+        "initial_capital": request.initial_capital,
+        "message": "Backtest queued. Check status with test_id"
+    }
+
+# Get backtest results
+@app.get("/backtest/{test_id}")
+def get_backtest_result(test_id: str):
+    return {
+        "test_id": test_id,
+        "status": "completed",
+        "total_return": 15.5,
+        "win_rate": 62.3,
+        "sharpe_ratio": 1.85,
+        "max_drawdown": 8.2,
+        "trades_executed": 45,
+        "message": "Sample results - backtesting engine coming soon"
     }
 
 if __name__ == "__main__":
