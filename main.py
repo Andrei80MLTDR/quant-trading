@@ -162,6 +162,69 @@ def get_backtest_result(test_id: str):
         "message": "Sample results - backtesting engine coming soon"
     }
 
+# Generate trading signal (LONG/SHORT)
+@app.post("/signal")
+def generate_signal(symbol: str, strategy: str):
+    """
+    Generate LONG/SHORT signal for an asset based on strategy.
+    Simulates technical analysis to produce trading signals.
+    """
+    # Simple signal generation logic (can be enhanced with real indicators)
+    import random
+    
+    # Simulate RSI value (0-100)
+    rsi_value = random.uniform(20, 80)
+    
+    # Signal logic based on strategy
+    if strategy.lower() == "rsi pattern recognition":
+        if rsi_value > 70:
+            signal = "SHORT"  # Overbought
+            confidence = 75
+        elif rsi_value < 30:
+            signal = "LONG"   # Oversold
+            confidence = 75
+        else:
+            signal = "NEUTRAL"
+            confidence = 50
+    elif strategy.lower() == "bollinger bands":
+        # Simulate Bollinger Bands position (0-100)
+        bb_position = random.uniform(0, 100)
+        if bb_position > 85:
+            signal = "SHORT"
+            confidence = 72
+        elif bb_position < 15:
+            signal = "LONG"
+            confidence = 72
+        else:
+            signal = "NEUTRAL"
+            confidence = 50
+    elif strategy.lower() == "macd oscillator":
+        # Simulate MACD histogram value
+        macd_value = random.uniform(-5, 5)
+        if macd_value > 2:
+            signal = "LONG"
+            confidence = 68
+        elif macd_value < -2:
+            signal = "SHORT"
+            confidence = 68
+        else:
+            signal = "NEUTRAL"
+            confidence = 50
+    else:
+        # Default signal
+        signal = random.choice(["LONG", "SHORT"])
+        confidence = 60
+    
+    return {
+        "symbol": symbol,
+        "strategy": strategy,
+        "signal": signal,
+        "confidence": f"{confidence}%",
+        "rsi_value": round(rsi_value, 2),
+        "timestamp": "2024-12-11T10:00:00Z",
+        "message": f"Signal generated: {signal} for {symbol} using {strategy}"
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
